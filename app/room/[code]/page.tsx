@@ -121,6 +121,20 @@ export default function RoomPage({ params }: PageProps) {
     router.replace('/')
   }
 
+  const isHost = !!user && !!room && user.id === room.host_id
+  const currentTrack = queue[0] ?? null
+
+  // Auto-add a song when the queue runs low (host only)
+  // Must be called before any early returns to satisfy Rules of Hooks
+  useAutoQueue({
+    roomId: room?.id ?? '',
+    isHost,
+    queue,
+    displayName,
+    onAdded: (title, artist) => show(`AI added "${title}" by ${artist}`, 'success'),
+    onError: (msg) => show(msg, 'error'),
+  })
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -133,19 +147,6 @@ export default function RoomPage({ params }: PageProps) {
   }
 
   if (!room) return null
-
-  const isHost = !!user && user.id === room.host_id
-  const currentTrack = queue[0] ?? null
-
-  // Auto-add a song when the queue runs low (host only)
-  useAutoQueue({
-    roomId: room.id,
-    isHost,
-    queue,
-    displayName,
-    onAdded: (title, artist) => show(`AI added "${title}" by ${artist}`, 'success'),
-    onError: (msg) => show(msg, 'error'),
-  })
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 max-w-2xl mx-auto">
