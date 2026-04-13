@@ -14,6 +14,7 @@ import UserPresence from '@/components/room/UserPresence'
 import AIPickModal from '@/components/room/AIPickModal'
 import { Toast, useToast } from '@/components/ui/Toast'
 import { copyToClipboard } from '@/lib/utils'
+import { useAutoQueue } from '@/hooks/useAutoQueue'
 
 interface PageProps {
   params: Promise<{ code: string }>
@@ -135,6 +136,16 @@ export default function RoomPage({ params }: PageProps) {
 
   const isHost = !!user && user.id === room.host_id
   const currentTrack = queue[0] ?? null
+
+  // Auto-add a song when the queue runs low (host only)
+  useAutoQueue({
+    roomId: room.id,
+    isHost,
+    queue,
+    displayName,
+    onAdded: (title, artist) => show(`AI added "${title}" by ${artist}`, 'success'),
+    onError: (msg) => show(msg, 'error'),
+  })
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 max-w-2xl mx-auto">
