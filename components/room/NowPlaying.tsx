@@ -61,6 +61,7 @@ export default function NowPlaying({ currentTrack, isHost }: Props) {
   const [playerState, setPlayerState] = useState<SpotifyPlayerState | null>(null)
   const [deviceId, setDeviceId] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
+  const [noPremium, setNoPremium] = useState(false)
   const progressInterval = useRef<ReturnType<typeof setInterval>>(null)
 
   // Load Spotify Web Playback SDK (host only)
@@ -105,9 +106,8 @@ export default function NowPlaying({ currentTrack, isHost }: Props) {
           const d = data as { message: string }
           console.error('Auth error:', d.message)
         })
-        p.addListener('account_error', (data: unknown) => {
-          const d = data as { message: string }
-          console.error('Account error — Spotify Premium required for playback:', d.message)
+        p.addListener('account_error', () => {
+          setNoPremium(true)
         })
 
         p.connect()
@@ -222,8 +222,21 @@ export default function NowPlaying({ currentTrack, isHost }: Props) {
         </div>
       </div>
 
+      {/* Premium required banner */}
+      {isHost && noPremium && (
+        <div className="mt-4 pt-4 border-t border-zinc-700/50 flex items-start gap-3 bg-amber-900/20 border border-amber-700/40 rounded-xl px-3 py-2.5">
+          <span className="text-amber-400 text-lg leading-none shrink-0">⚠️</span>
+          <div>
+            <p className="text-amber-300 text-sm font-semibold">Spotify Premium required for playback</p>
+            <p className="text-amber-400/70 text-xs mt-0.5">
+              The queue and voting still work — guests can add songs and vote. Upgrade to Premium to control playback directly from partyaux.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Host controls */}
-      {isHost && player && (
+      {isHost && player && !noPremium && (
         <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-zinc-700/50">
           <button
             onClick={() => player.previousTrack()}
